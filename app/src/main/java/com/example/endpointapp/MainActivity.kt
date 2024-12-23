@@ -1,15 +1,20 @@
 package com.example.endpointapp
 
-import android.R
+import com.example.endpointapp.R
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
 
 class MainActivity : AppCompatActivity() {
+
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var adapter: TourAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -19,6 +24,9 @@ class MainActivity : AppCompatActivity() {
         // Initialize Retrofit
         val apiService = RetrofitClient.getClient(BASE_URL).create(ApiService::class.java)
 
+
+        recyclerView = findViewById(R.id.recyclerView)
+        recyclerView.layoutManager = LinearLayoutManager(this)
         // Prepare request body
         val requestBody = YourRequestType()
 
@@ -47,7 +55,27 @@ class MainActivity : AppCompatActivity() {
                 Log.e("API", "Error: " + t.message)
             }
         })
-    }
+
+        apiService.getAllTours().enqueue(object : Callback<List<Tour>> {
+            override fun onResponse(call: Call<List<Tour>>, response: Response<List<Tour>>) {
+                if (response.isSuccessful) {
+                    val tours = response.body()
+                    tours?.let {
+                        adapter = TourAdapter(it)
+                        recyclerView.adapter = adapter
+                    }
+                } else {
+                    Log.e("API", "Request failed with code: ${response.code()}")
+                }
+            }
+
+            override fun onFailure(call: Call<List<Tour>>, t: Throwable) {
+                Log.e("API", "Request failed: ${t.message}")
+            }
+        })
+
+
+}
 
 
     companion object {
